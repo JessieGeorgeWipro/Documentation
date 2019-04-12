@@ -1,0 +1,98 @@
+./gradlew cloudNativeDeveloperDatabaseMigrations -PserverUrl=https://pal-tracker-mas-proddigi.apps.evans.pal.pivotal.io -Dhttps.pro
+xyHost=proxy1.wipro.com -Dhttps.proxyPort=8080
+
+./gradlew cloudNativeDeveloperHealthMonitoring -PserverUrl=https://pal-tracker-mas-digi-review.apps.evans.pal.pivotal.io/cloudfoundryapplication -Dhttps.pro
+xyHost=proxy1.wipro.com -Dhttps.proxyPort=8080
+
+dotnet run --urls "http://*:8881" --project Applications/AllocationsServer
+
+dotnet run --urls "http://*:8882" --project Applications/BacklogServer
+
+dotnet run --urls "http://*:8883" --project Applications/RegistrationServer
+
+dotnet run --urls "http://*:8884" --project Applications/TimesheetsServer
+
+curl -i -XPOST -H"Content-Type: application/json" localhost:8883/registration -d'{"name": "Pete"}'
+curl -i -XPOST -H"Content-Type: application/json" localhost:8883/registration -d'{"name": "Jessie"}'
+
+curl -i localhost:8883/users/1
+
+$ curl -i localhost:8883/accounts?ownerId=1
+
+$ curl -i -XPOST -H"Content-Type: application/json" localhost:8883/projects -d'{"name": "Basket Weaving", "accountId":"1"}'
+$ curl -i localhost:8883/projects?accountId=1
+
+
+$ curl -i -XPOST -H"Content-Type: application/json" localhost:8881/allocations -d'{"projectId": 1, "userId": 1, "firstD
+ay": "2015-05-17", "lastDay": "2015-05-18"}'
+
+$ curl -i localhost:8881/allocations?projectId=1
+
+
+
+$ curl -i -XPOST -H"Content-Type: application/json" localhost:8882/stories -d'{"projectId": 1, "name": "Find some reeds
+"}'
+$ curl -i localhost:8882/stories?projectId=1
+
+$ curl -i -XPOST -H"Content-Type: application/json" localhost:8884/time-entries/ -d'{"projectId": 1, "userId": 1, "date
+": "2015-05-17", "hours": 6}'
+
+$ curl -i localhost:8884/time-entries?userId=1
+
+./gradlew dotnetCloudNativeDeveloperDistributedSystemDeployment -PregistrationServerUrl=https://registration-pal-jg.apps.evans.pal.pivotal.io \
+    -PbacklogServerUrl=https://backlog-pal-jg.apps.evans.pal.pivotal.io \
+    -PallocationsServerUrl=https://allocations-pal-jg.apps.evans.pal.pivotal.io \
+    -PtimesheetsServerUrl=https://timesheets-pal-jg.apps.evans.pal.pivotal.io -Dhttps.pro
+xyHost=proxy1.wipro.com -Dhttps.proxyPort=8080
+
+dotnet add ~/workspace/pal-tracker-distributed/Applications/AllocationsServer package Pivotal.Discovery.ClientCore --version 2.1.1
+dotnet add ~/workspace/pal-tracker-distributed/Applications/AllocationsServer package Steeltoe.Extensions.Configuration.CloudFoundryCore --version 2.1.1
+
+dotnet add ~/workspace/pal-tracker-distributed/Applications/BacklogServer package Pivotal.Discovery.ClientCore --version 2.1.1
+dotnet add ~/workspace/pal-tracker-distributed/Applications/BacklogServer package Steeltoe.Extensions.Configuration.CloudFoundryCore --version 2.1.1
+
+dotnet add ~/workspace/pal-tracker-distributed/Applications/RegistrationServer package Pivotal.Discovery.ClientCore --version 2.1.1
+dotnet add ~/workspace/pal-tracker-distributed/Applications/RegistrationServer package Steeltoe.Extensions.Configuration.CloudFoundryCore --version 2.1.1
+
+dotnet add ~/workspace/pal-tracker-distributed/Applications/TimesheetsServer package Pivotal.Discovery.ClientCore --version 2.1.1
+dotnet add ~/workspace/pal-tracker-distributed/Applications/TimesheetsServer package Steeltoe.Extensions.Configuration.CloudFoundryCore --version 2.1.1
+
+env:
+    REGISTRATION_SERVER_ENDPOINT: https://registration-pal-jg.apps.evans.pal.pivotal.io/
+
+curl -k 'https://p-identity.login.sys.evans.pal.pivotal.io/oauth/token' -i -u 'adad0c15-2d5e-44a1-ad12-130475570947:d900b4a9-4dda-4d62-b47d-9cc4b8ce0c7a' -X POST -H 'Accept: application/json' -H 'Content-Type: application/x-www-form-urlencoded' -d 'grant_type=client_credentials&response_type=token'
+HTTP/1.1 200 Connection established
+
+HTTP/2 200
+cache-control: no-store
+content-type: application/json;charset=UTF-8
+date: Thu, 11 Apr 2019 11:45:32 GMT
+pragma: no-cache
+strict-transport-security: max-age=31536000 ; includeSubDomains
+x-content-type-options: nosniff
+x-frame-options: DENY
+x-vcap-request-id: 9fa9cbe6-c27d-4b48-6819-75e29e74c261
+x-xss-protection: 1; mode=block
+content-length: 1242
+via: 1.1 google
+alt-svc: clear
+
+{"access_token":"eyJhbGciOiJSUzI1NiIsImtpZCI6ImtleS0xIiwidHlwIjoiSldUIn0.eyJqdGkiOiJhYWNlMjdjNzhlODA0NTJiOTkwMzgxNTI1ZTQ2MWZjMiIsInN1YiI6ImFkYWQwYzE1LTJkNWUtNDRhMS1hZDEyLTEzMDQ3NTU3MDk0NyIsImF1dGhvcml0aWVzIjpbInVhYS5yZXNvdXJjZSJdLCJzY29wZSI6WyJ1YWEucmVzb3VyY2UiXSwiY2xpZW50X2lkIjoiYWRhZDBjMTUtMmQ1ZS00NGExLWFkMTItMTMwNDc1NTcwOTQ3IiwiY2lkIjoiYWRhZDBjMTUtMmQ1ZS00NGExLWFkMTItMTMwNDc1NTcwOTQ3IiwiYXpwIjoiYWRhZDBjMTUtMmQ1ZS00NGExLWFkMTItMTMwNDc1NTcwOTQ3IiwiZ3JhbnRfdHlwZSI6ImNsaWVudF9jcmVkZW50aWFscyIsInJldl9zaWciOiI5MzczNjQxNCIsImlhdCI6MTU1NDk4MzEzMiwiZXhwIjoxNTU1MDI2MzMyLCJpc3MiOiJodHRwczovL3AtaWRlbnRpdHkudWFhLnN5cy5ldmFucy5wYWwucGl2b3RhbC5pby9vYXV0aC90b2tlbiIsInppZCI6IjIzNDQyZGJlLTU0NWYtNGYwMS04ZWZiLWFhNjkzYTMzN2YwOCIsImF1ZCI6WyJhZGFkMGMxNS0yZDVlLTQ0YTEtYWQxMi0xMzA0NzU1NzA5NDciLCJ1YWEiXX0.CIHOE2cnwBstjj9-f7bhADF_xKdMvN7Iejygpzt3bCKdIii0VJHRBi46coFr7LjjGI6jIEmQWaF260wNah_YmVIvs1t5JMLrszHXUaKRdEfxELUGT6ObLLw-UPaXtCZ9sPkUrC49dIg9ta7145ByeAhWaSOuhRSRYwPRXuLj_lAFELU2sYytzqU7lSwLZxvdtrPUSWzms9fiBm2gKjEYNY4pkZPnTMF_KImQGEG1ga79EAxIADCX1o_f45jz8V84xlANisnBg020SO325aALwZ-3Kt_UKonjgX8V6eAaWfY-W30R07Oljv9ut76xbWfFB6twCB6j_6NpF2E8Oc662g","token_type":"bearer","expires_in":43199,"scope":"uaa.resource","jti":"aace27c78e80452b990381525e461fc2"}
+
+  "credentials": {
+     "auth_domain": "https://p-identity.login.sys.evans.pal.pivotal.io",
+     "client_id": "adad0c15-2d5e-44a1-ad12-130475570947",
+     "client_secret": "d900b4a9-4dda-4d62-b47d-9cc4b8ce0c7a"
+
+./gradlew dotnetCloudNativeDeveloperDistributedSystemWithSecurity -PregistrationServerUrl=https://registration-pal-jg.apps.evans.pal.pivotal.io -PbacklogServerUrl=https://backlog-pal-jg.apps.evans.pal.pivotal.io -PallocationsServerUrl=https://allocations-pal-jg.apps.evans.pal.pivotal.io -PtimesheetsServerUrl=https://timesheets-pal-jg.apps.evans.pal.pivotal.io -PuaaUrl="https://p-identity.login.sys.evans.pal.pivotal.io" -PclientId="adad0c15-2d5e-44a1-ad12-130475570947" -PclientSecret="d900b4a9-4dda-4d62-b47d-9cc4b8ce0c7a" 
+
+cd PlatformServices
+ ./gradlew ConfigServer:bootRun
+
+./gradlew EurekaServer:bootRun
+
+https://circleci.com/gh/JessieGeorgeWipro/workflows
+fa6bf0e7-8f1a-4496-bd18-c1e65a9104ef
+cdaa0954-e2de-4950-a659-3eed942abf13
+
+cf env tracker-allocations
